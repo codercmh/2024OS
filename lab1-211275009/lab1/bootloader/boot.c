@@ -4,7 +4,11 @@
 
 void bootMain(void) {
 	//TODO
-
+	// 从磁盘读取Hello World程序到内存地址0x8c00
+	readSect((void *)0x8c00, 1);
+    // 跳转到内存地址0x8c00开始执行Hello World程序
+    void (*helloWorld)() = (void(*)())0x8c00;
+    helloWorld();
 }
 
 
