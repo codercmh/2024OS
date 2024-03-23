@@ -1,5 +1,6 @@
 # TODO: This is lab1.1
 /* Real Mode Hello World */
+/*
 .code16
 
 .global start
@@ -27,16 +28,16 @@ printStr:
 	movw %ax, %bp
 	movw 6(%esp), %cx
 	movw $0x1301, %ax
-	movw $0x000c, %bx
+	movw $0x0049, %bx
 	movw $0x0000, %dx
 	int $0x10
 	popw %bp
 	ret
-
+*/
 
 # TODO: This is lab1.2
 /* Protected Mode Hello World */
-/*
+
 .code16
 
 .global start
@@ -46,7 +47,7 @@ start:
 	movw %ax, %es
 	movw %ax, %ss
 	# TODO:关闭中断
-
+	cli
 
 	# 启动A20总线
 	inb $0x92, %al 
@@ -57,7 +58,9 @@ start:
 	data32 addr32 lgdt gdtDesc # loading gdtr, data32, addr32
 
 	# TODO：设置CR0的PE位（第0位）为1
-
+	movl %cr0, %eax    # 读取CR0到EAX
+	orl $0x1, %eax     # 设置PE位
+	movl %eax, %cr0    # 写回CR0
 
 
 	# 长跳转切换至保护模式
@@ -76,8 +79,16 @@ start32:
 	movl $0x8000, %eax # setting esp
 	movl %eax, %esp
 	# TODO:输出Hello World
+    movl $0xB8000, %edi    # 显存开始地址
+    movl $message, %esi    # 字符串的地址
 
-
+printStr:
+    lodsb                  # 将字符串的下一个字节加载到AL
+    test %al, %al          # 检查是否到达字符串末尾（AL=0）
+    jz loop32              # 如果是，跳转到完成标签
+    movb %al, (%edi)       # 将字符写入显存
+    addl $2, %edi          # 移动到下一个字符位置（跳过属性字节）
+    jmp printStr           # 继续下一个字符
 
 loop32:
 	jmp loop32
@@ -96,21 +107,20 @@ gdt: # 8 bytes for each table entry, at least 1 entry
 	.byte 0,0,0,0
 
 	# TODO：code segment entry
-	.word
-	.byte 
+	.word 0xFFFF, 0x0000      # 段界限的低16位，基地址的低16位
+	.byte 0x00, 0x9A, 0xCF, 0x00  # 基地址的第3字节，访问标志，段界限的高4位+标志，基地址的高字节
 
 	# TODO：data segment entry
-	.word
-	.byte 
-
+	.word 0xFFFF, 0x0000      # 段界限的低16位，基地址的低16位
+	.byte 0x00, 0x92, 0xCF, 0x00  # 基地址的第3字节，访问标志，段界限的高4位+标志，基地址的高字节
 	# TODO：graphics segment entry
-	.word
-	.byte 
+	.word 0xFFFF, 0x8000      # 段界限的低16位，基地址的低16位
+	.byte 0x0B, 0x92, 0xCF, 0x00  # 基地址的第3字节，访问标志，段界限的高4位+标志，基地址的高字节
 
 gdtDesc: 
 	.word (gdtDesc - gdt -1) 
 	.long gdt 
-*/
+
 
 
 # TODO: This is lab1.3
