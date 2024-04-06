@@ -7,11 +7,11 @@ void kEntry(void) {
 	initSerial();// initialize serial port
 	
 	// TODO: 做一系列初始化
-	// initialize idt
+	initIdt();// initialize idt
 	
-	// initialize 8259a
+	initIntr();// initialize 8259a
 	
-	// initialize gdt, tss
+	initSeg();// initialize gdt, tss
 	
 	// initialize vga device
 	
