@@ -166,10 +166,30 @@ void syscallRead(struct TrapFrame *tf){
 
 void syscallGetChar(struct TrapFrame *tf){
 	// TODO: 自由实现
-
+	if(bufferHead!=bufferTail){
+		char ch = keyBuffer[bufferHead];
+		bufferHead = (bufferHead+1) % MAX_KEYBUFFER_SIZE;
+		tf->eax = (uint32_t)ch;
+	}else{
+		tf->eax = (uint32_t)-1;
+	}
 }
 
 void syscallGetStr(struct TrapFrame *tf){
 	// TODO: 自由实现
+	char *userBuffer = (char *)tf->edx;
+    int maxSize = tf->ebx;
+    int i = 0;
 
+    while (i < maxSize - 1 && bufferHead != bufferTail) {
+        char c = keyBuffer[bufferHead];
+        bufferHead = (bufferHead + 1) % MAX_KEYBUFFER_SIZE;
+        userBuffer[i++] = c;
+        if (c == '\n'){
+            break;
+        }
+    }
+    userBuffer[i] = '\0';
+
+    tf->eax = i;
 }
