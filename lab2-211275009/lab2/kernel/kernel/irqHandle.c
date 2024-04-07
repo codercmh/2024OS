@@ -31,8 +31,15 @@ void irqHandle(struct TrapFrame *tf) { // pointer tf = esp
 
 	switch(tf->irq) {
 		// TODO: 填好中断处理程序的调用
-
-
+		case 0xd:
+			GProtectFaultHandle(tf);
+			break;
+		case 0x21:
+			KeyboardHandle(tf);
+			break;
+		case 0x80:
+			syscallHandle(tf);
+			break;
 		default:assert(0);
 	}
 }
@@ -66,8 +73,19 @@ void KeyboardHandle(struct TrapFrame *tf){
 		}
 	}else if(code < 0x81){ 
 		// TODO: 处理正常的字符
-		
-
+		char ch=getChar(code);
+		keyBuffer[bufferTail++]=ch;
+		putChar(ch);
+		displayCol++;
+		if(displayCol=80){
+			displayCol=0;
+			displayRow++;
+			tail=0;
+			if(displayRow=25){
+				scrollScreen();
+				displayRow=24;
+			}
+		}
 	}
 	updateCursor(displayRow, displayCol);
 	
