@@ -124,8 +124,29 @@ void syscallPrint(struct TrapFrame *tf) {
 	for (i = 0; i < size; i++) {
 		asm volatile("movb %%es:(%1), %0":"=r"(character):"r"(str+i));
 		// TODO: 完成光标的维护和打印到显存
-
-
+		if(character=='\n'){
+			displayRow++;
+			displayCol=0;
+			tail=0;
+			if(displayRow==25){
+				scrollScreen();
+				displayRow=24;
+			}
+		}else{
+			data = character | (0x0c << 8);
+			pos = (80*displayRow+displayCol)*2;
+			asm volatile("movw %0, (%1)"::"r"(data),"r"(pos+0xb8000));
+			displayCol++;
+			if(displayCol=80){
+				displayCol=0;
+				displayRow++;
+				tail=0;
+				if(displayRow=25){
+					scrollScreen();
+					displayRow=24;
+				}
+			}
+		}
 	}
 	tail=displayCol;
 	updateCursor(displayRow, displayCol);

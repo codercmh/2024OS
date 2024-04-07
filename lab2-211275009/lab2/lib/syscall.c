@@ -79,24 +79,58 @@ int hex2Str(uint32_t hexadecimal, char *buffer, int size, int count);
 int str2Str(char *string, char *buffer, int size, int count);
 
 void printf(const char *format,...){
+	va_list args;
+	va_start(args, format);
 	int i=0; // format index
 	char buffer[MAX_BUFFER_SIZE];
 	int count=0; // buffer index
-	int index=0; // parameter index
-	void *paraList=(void*)&format; // address of format in stack
-	int state=0; // 0: legal character; 1: '%'; 2: illegal format
+	//int index=0; // parameter index
+	//void *paraList=(void*)&format; // address of format in stack
+	//int state=0; // 0: legal character; 1: '%'; 2: illegal format
 	int decimal=0;
 	uint32_t hexadecimal=0;
 	char *string=0;
 	char character=0;
-	while(format[i]!=0){
+	while(format[i]!='\0'){
 		// TODO: support format %d %x %s %c
-
-
-
+		if (format[i] == '%') {  // 发现格式说明符
+            i++;
+            switch (format[i]) {
+                case 'd':  // 十进制整数
+                    decimal = va_arg(args, int);
+                    count = dec2Str(decimal, buffer, sizeof(buffer), count);
+                    break;
+                case 'x':  // 十六进制整数
+                    hexadecimal = va_arg(args, uint32_t);
+                    count = hex2Str(hexadecimal, buffer, sizeof(buffer), count);
+                    break;
+                case 's':  // 字符串
+                    string = va_arg(args, char*);
+                    count = str2Str(string, buffer, sizeof(buffer), count);
+                    break;
+                case 'c':  // 字符
+                    character = (char) va_arg(args, int);
+                    buffer[count++] = character;
+                    if (count == sizeof(buffer)) {
+                        syscall(SYS_WRITE, STD_OUT, (uint32_t)buffer, (uint32_t)count, 0, 0);
+                        count = 0;
+                    }
+                    break;
+                default:
+                    break;
+            }
+        } else {
+            buffer[count++] = format[i];  // 处理非格式字符串的常规字符
+            if (count == sizeof(buffer)) {
+                syscall(SYS_WRITE, STD_OUT, (uint32_t)buffer, (uint32_t)count, 0, 0);
+                count = 0;
+            }
+        }
+		i++;
 	}
-	if(count!=0)
+	if(count!=0){
 		syscall(SYS_WRITE, STD_OUT, (uint32_t)buffer, (uint32_t)count, 0, 0);
+	}
 }
 
 int dec2Str(int decimal, char *buffer, int size, int count) {
@@ -136,7 +170,7 @@ int dec2Str(int decimal, char *buffer, int size, int count) {
 	}
 
 	while(i!=0){
-		buffer[count]=number[i-1]+'0';
+		buffer[count]=number[i-1]+'0'; // ASCII
 		count++;
 		if(count==size) {
 			syscall(SYS_WRITE, STD_OUT, (uint32_t)buffer, (uint32_t)size, 0, 0);
