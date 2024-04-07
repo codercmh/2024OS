@@ -13,9 +13,9 @@ void kEntry(void) {
 	
 	initSeg();// initialize gdt, tss
 	
-	// initialize vga device
+	initVga();// initialize vga device
 	
-	// initialize keyboard device
+	initKeyTable();// initialize keyboard device
 
 
 

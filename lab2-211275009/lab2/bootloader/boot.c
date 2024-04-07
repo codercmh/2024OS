@@ -16,11 +16,18 @@ void bootMain(void) {
 	}
 
 	// TODO: 阅读boot.h查看elf相关信息，填写kMainEntry、phoff、offset
+	ELFHeader *eh = (ELFHeader *)elf;
 
+	if (eh->magic == 0x464C457F) { // Check for ELF magic number
+		phoff = eh->phoff;
+		ProgramHeader *ph = (ProgramHeader *)((unsigned char *)eh + phoff);
+		offset = ph->off;
+		kMainEntry = (void(*)(void))(eh->entry);
+	}
 
 	for (i = 0; i < 200 * 512; i++) {
 			*(unsigned char *)(elf + i) = *(unsigned char *)(elf + i + offset);
-		}
+	}
 
 	kMainEntry();
 }
