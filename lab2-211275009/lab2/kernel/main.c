@@ -17,9 +17,6 @@ void kEntry(void) {
 	
 	initKeyTable();// initialize keyboard device
 
-
-
-
 	loadUMain(); // load user program, enter user space
 
 	while(1);

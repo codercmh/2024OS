@@ -10,7 +10,7 @@ int uEntry(void) {
 	asm volatile("movw %%ss, %0":"=m"(selector)); 
 	asm volatile("movw %%ax, %%ds"::"a"(selector));
 	
-	
+/*
 	printf("I/O test begin...\n");
 	printf("the answer should be:\n");
 	printf("#######################################################\n");
@@ -42,7 +42,7 @@ int uEntry(void) {
 	printf("%s is stronger than Alice\n",name);
 	printf("=======================================================\n");
 	printf("Test end!!! Good luck!!!\n");
-
+*/
 	while(1);
 	return 0;
 }

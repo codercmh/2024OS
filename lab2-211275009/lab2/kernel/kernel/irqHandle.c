@@ -77,11 +77,11 @@ void KeyboardHandle(struct TrapFrame *tf){
 		keyBuffer[bufferTail++]=ch;
 		putChar(ch);
 		displayCol++;
-		if(displayCol=80){
+		if(displayCol==80){
 			displayCol=0;
 			displayRow++;
 			tail=0;
-			if(displayRow=25){
+			if(displayRow==25){
 				scrollScreen();
 				displayRow=24;
 			}
@@ -137,11 +137,11 @@ void syscallPrint(struct TrapFrame *tf) {
 			pos = (80*displayRow+displayCol)*2;
 			asm volatile("movw %0, (%1)"::"r"(data),"r"(pos+0xb8000));
 			displayCol++;
-			if(displayCol=80){
+			if(displayCol==80){
 				displayCol=0;
 				displayRow++;
 				tail=0;
-				if(displayRow=25){
+				if(displayRow==25){
 					scrollScreen();
 					displayRow=24;
 				}
