@@ -31,6 +31,8 @@ void irqHandle(struct TrapFrame *tf) { // pointer tf = esp
 
 	switch(tf->irq) {
 		// TODO: 填好中断处理程序的调用
+		case -1:
+			break;
 		case 0xd:
 			GProtectFaultHandle(tf);
 			break;
@@ -40,7 +42,8 @@ void irqHandle(struct TrapFrame *tf) { // pointer tf = esp
 		case 0x80:
 			syscallHandle(tf);
 			break;
-		default:assert(0);
+		default:
+			assert(0);
 	}
 }
 
@@ -73,9 +76,14 @@ void KeyboardHandle(struct TrapFrame *tf){
 		}
 	}else if(code < 0x81){ 
 		// TODO: 处理正常的字符
+		if(code==0x3a||code==0x2a||code==0x36||code==0x1d){
+			return;
+		}
 		char ch=getChar(code);
 		keyBuffer[bufferTail++]=ch;
-		putChar(ch);
+		uint16_t data = ch | (0x0c << 8);
+		int pos = (80*displayRow+displayCol)*2;
+		asm volatile("movw %0, (%1)"::"r"(data),"r"(pos+0xb8000));
 		displayCol++;
 		if(displayCol==80){
 			displayCol=0;
@@ -166,6 +174,36 @@ void syscallRead(struct TrapFrame *tf){
 
 void syscallGetChar(struct TrapFrame *tf){
 	// TODO: 自由实现
+	uint32_t code = getKeyCode();
+	while(!code){
+		code=getKeyCode();
+	}
+	char ch=getChar(code);
+	//keyBuffer[bufferTail++]=ch;
+	uint16_t data = ch | (0x0c << 8);
+	int pos = (80*displayRow+displayCol)*2;
+	asm volatile("movw %0, (%1)"::"r"(data),"r"(pos+0xb8000));
+	displayCol++;
+	if(displayCol==80){
+		displayCol=0;
+		displayRow++;
+		//tail=0;
+		if(displayRow==25){
+			scrollScreen();
+			displayRow=24;
+		}
+	}
+	//putChar(ch);
+	updateCursor(displayRow, displayCol);
+	while(1){
+		code = getKeyCode();
+		char character = getChar(code);
+		if (character == '\n'){
+			break;
+		}
+	}
+	tf->eax=(uint32_t)ch;
+	/*
 	if(bufferHead!=bufferTail){
 		char ch = keyBuffer[bufferHead];
 		bufferHead = (bufferHead+1) % MAX_KEYBUFFER_SIZE;
@@ -173,10 +211,69 @@ void syscallGetChar(struct TrapFrame *tf){
 	}else{
 		tf->eax = (uint32_t)-1;
 	}
+	*/
 }
 
 void syscallGetStr(struct TrapFrame *tf){
 	// TODO: 自由实现
+
+	char *str = (char *)tf->edx;
+    int maxSize = tf->ebx;
+    char tempBuffer[maxSize];
+    int index = 0;
+	uint32_t code = getKeyCode();
+	while(code == 0x1c || code == 0x1c + 0x80){
+		code=getKeyCode();
+	}
+	code = 0;
+	while(1){
+		if(index>maxSize-1){
+			break;
+		}
+		uint32_t nextcode=getKeyCode();
+		if(nextcode==0x1c){
+			break;
+		}
+		if(nextcode!=code){
+			if(nextcode == 0xe){ // 退格符
+				//要求只能退格用户键盘输入的字符串，且最多退到当行行首
+				if(displayCol>0 && index>0){
+					displayCol--;
+					index--;
+					uint16_t data = 0 | (0x0c << 8);
+					int pos = (80*displayRow+displayCol)*2;
+					asm volatile("movw %0, (%1)"::"r"(data),"r"(pos+0xb8000));
+				}
+			}else if(nextcode < 0x81){
+				// TODO: 处理正常的字符
+				char ch=getChar(nextcode);
+				tempBuffer[index++] = ch;
+				//keyBuffer[bufferTail++]=ch;
+				uint16_t data = ch | (0x0c << 8);
+				int pos = (80*displayRow+displayCol)*2;
+				asm volatile("movw %0, (%1)"::"r"(data),"r"(pos+0xb8000));
+				displayCol++;
+				if(displayCol==80){
+					displayCol=0;
+					displayRow++;
+					tail=0;
+					if(displayRow==25){
+						scrollScreen();
+						displayRow=24;
+					}
+				}
+			}
+			updateCursor(displayRow, displayCol);
+			code = nextcode;
+		}
+	}
+    tempBuffer[index] = '\0'; // 在临时缓冲区的末尾添加空字符
+	for(int j = 0;j <= index;j++)	
+		putChar(tempBuffer[j]);
+	for (int j = 0; j <= index; j++) {
+        str[j] = tempBuffer[j];
+    }
+	/*
 	char *userBuffer = (char *)tf->edx;
     int maxSize = tf->ebx;
     int i = 0;
@@ -192,4 +289,5 @@ void syscallGetStr(struct TrapFrame *tf){
     userBuffer[i] = '\0';
 
     tf->eax = i;
+	*/
 }
