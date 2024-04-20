@@ -13,6 +13,9 @@ int uEntry(void) {
 	//char num = getChar();
 	//printf("%c * 123 = 246\n",num);
 
+	//char name[20];
+	//getStr(name,20);
+	//printf("%s", name);
 
 	printf("I/O test begin...\n");
 	printf("the answer should be:\n");
@@ -45,6 +48,7 @@ int uEntry(void) {
 	printf("%s is stronger than Alice\n",name);
 	printf("=======================================================\n");
 	printf("Test end!!! Good luck!!!\n");
+
 
 	while(1);
 	return 0;

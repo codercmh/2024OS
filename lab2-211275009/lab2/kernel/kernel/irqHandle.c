@@ -216,12 +216,12 @@ void syscallGetChar(struct TrapFrame *tf){
 
 void syscallGetStr(struct TrapFrame *tf){
 	// TODO: 自由实现
-
 	char *str = (char *)tf->edx;
     int maxSize = tf->ebx;
     char tempBuffer[maxSize];
     int index = 0;
 	uint32_t code = getKeyCode();
+	//防止读入上一次的回车 导致直接退出
 	while(code == 0x1c || code == 0x1c + 0x80){
 		code=getKeyCode();
 	}
@@ -267,12 +267,21 @@ void syscallGetStr(struct TrapFrame *tf){
 			code = nextcode;
 		}
 	}
-    tempBuffer[index] = '\0'; // 在临时缓冲区的末尾添加空字符
-	for(int j = 0;j <= index;j++)	
-		putChar(tempBuffer[j]);
-	for (int j = 0; j <= index; j++) {
-        str[j] = tempBuffer[j];
-    }
+	int k=0;
+	for(int p=0;p<index;p++){
+		asm volatile("movb %0, %%es:(%1)"::"r"(tempBuffer[p]),"r"(str+k));
+		//putChar(str[k]);
+		k++;
+	}
+	asm volatile("movb $0x00, %%es:(%0)"::"r"(str+index));
+	return;
+    //tempBuffer[index] = '\0'; // 在临时缓冲区的末尾添加空字符
+	//for(int j = 0;j <= index;j++)
+	//	putChar(tempBuffer[j]);
+	//for (int j = 0; j <= index; j++) {
+    //    str[j] = tempBuffer[j];
+	//	putChar(str[j]);
+    //}
 	/*
 	char *userBuffer = (char *)tf->edx;
     int maxSize = tf->ebx;
