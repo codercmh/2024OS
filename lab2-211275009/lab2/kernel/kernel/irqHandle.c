@@ -79,10 +79,13 @@ void KeyboardHandle(struct TrapFrame *tf){
 		}
 	}else if(code < 0x81){ 
 		// TODO: 处理正常的字符
-		if(code==0x3a||code==0x2a||code==0x36||code==0x1d){
+		//if(code==0x3a||code==0x2a||code==0x36||code==0x1d||code==0x01||code==0x38||code>0x39){
+		//	return;
+		//}
+		char ch=getChar(code);
+		if(ch==0){
 			return;
 		}
-		char ch=getChar(code);
 		keyBuffer[bufferTail++]=ch;
 		//putNum(bufferHead);
 		//putNum(bufferTail);
