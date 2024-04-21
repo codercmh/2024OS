@@ -99,7 +99,7 @@ int bufferTail;
 static char keyTableL[KEYTABLE_SIZE];
 static char keyTableU[KEYTABLE_SIZE];
 static char *keyTable;
-static int keyboardState;
+int keyboardState;
 
 void initKeyTable() {
 	int i;

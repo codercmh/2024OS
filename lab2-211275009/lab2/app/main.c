@@ -49,7 +49,6 @@ int uEntry(void) {
 	printf("=======================================================\n");
 	printf("Test end!!! Good luck!!!\n");
 
-
 	while(1);
 	return 0;
 }
