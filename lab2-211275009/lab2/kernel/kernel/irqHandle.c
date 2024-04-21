@@ -239,6 +239,8 @@ void syscallGetChar(struct TrapFrame *tf){
 
 void syscallGetStr(struct TrapFrame *tf){
 	// TODO: 自由实现
+	int sel =  USEL(SEG_UDATA);
+	asm volatile("movw %0, %%es"::"m"(sel));
 	char *str = (char *)tf->edx;
     int maxSize = tf->ebx;
 	int end=0;
