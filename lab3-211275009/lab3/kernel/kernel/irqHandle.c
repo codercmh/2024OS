@@ -25,27 +25,26 @@ void syscallExit(struct StackFrame *sf);
 void set_new_running_process(void)
 {
 	//轮转调度
-	int i;
-	for(i=(current+1)%MAX_PCB_NUM;i!=current;i=(i+1)%MAX_PCB_NUM){
-		if(pcb[i].state==STATE_RUNNABLE && i!=0){
-			pcb[i].state=STATE_RUNNING;
-			current=i;
+	int if_find = 0;
+	for (int i = (current + 1) % MAX_PCB_NUM; i != current; i = (i+1) % MAX_PCB_NUM) {
+		if (pcb[i].state == STATE_RUNNABLE && i != 0) {
+			if_find = 1;
+			current = i;
 			break;
 		}
 	}
-	if(i==current){
-		current=0;
-		pcb[0].state=STATE_RUNNING;
-	}
+	if (!if_find) current = 0;
+	pcb[current].state = STATE_RUNNING;
+
 }
 
 
 void switch_process(void)
 {
-	uint32_t tmpStackTop1 = pcb[current].stackTop;
+	uint32_t tmpStackTop = pcb[current].stackTop;
 	pcb[current].stackTop = pcb[current].prevStackTop;
 	tss.esp0 = (uint32_t)&(pcb[current].stackTop);
-	asm volatile("movl %0, %%esp"::"m"(tmpStackTop1)); // switch kernel stack
+	asm volatile("movl %0, %%esp"::"m"(tmpStackTop)); // switch kernel stack
 	asm volatile("popl %gs");
 	asm volatile("popl %fs");
 	asm volatile("popl %es");
@@ -94,7 +93,7 @@ void GProtectFaultHandle(struct StackFrame *sf)
 void timerHandle(struct StackFrame *sf)
 {
 	// TODO
-
+	
 	//遍历pcb，将状态为STATE_BLOCKED的进程的sleepTime减一，如果进程的sleepTime变为0，重新设为STATE_RUNNABLE
 	for(int i=0;i<MAX_PCB_NUM;i++){
 		if(pcb[i].state==STATE_BLOCKED){
@@ -107,11 +106,23 @@ void timerHandle(struct StackFrame *sf)
 
 	//将当前进程的timeCount加一，如果时间片用完（timeCount==MAX_TIME_COUNT）
 	//且有其它状态为STATE_RUNNABLE的进程，切换，否则继续执行当前进程
+	//putNum(pcb[current].timeCount);
+	//if(pcb[current].timeCount==16){
+	//	pcb[current].timeCount=0;
+		//return;
+	//}
 	pcb[current].timeCount++;
-	if(pcb[current].timeCount==MAX_TIME_COUNT){
+	//putNum(pcb[current].timeCount);
+	if(pcb[current].timeCount>=MAX_TIME_COUNT){
 		pcb[current].timeCount=0;
 		pcb[current].state=STATE_RUNNABLE;
-		set_new_running_process();
+		for (int i = (current + 1) % MAX_PCB_NUM; i != current; i = (i+1) % MAX_PCB_NUM) {
+			if (pcb[i].state == STATE_RUNNABLE && i != 0) {
+				current = i;
+				break;
+			}
+		}
+		pcb[current].state = STATE_RUNNING;
 		switch_process();
 	}else{
 		return;
@@ -222,6 +233,13 @@ void syscallFork(struct StackFrame *sf)
 	}
 
 	//复制资源并初始化
+	enableInterrupt();
+	for (int j = 0; j < 0x100000; j++) {
+		*(unsigned char *)(j + (index + 1) * 0x100000) = *(unsigned char *)(j + (current + 1) * 0x100000);
+		asm volatile("int $0x20");
+	}
+	disableInterrupt();
+
 	pcb[index].pid = index;
 	pcb[index].prevStackTop = pcb[current].prevStackTop - (uint32_t)&(pcb[current]) + (uint32_t)&(pcb[index]);
 	pcb[index].sleepTime = 0;

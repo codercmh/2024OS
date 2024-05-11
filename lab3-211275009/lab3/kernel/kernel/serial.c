@@ -20,3 +20,32 @@ void putChar(char ch) {
 	outByte(SERIAL_PORT, ch);
 }
 
+void putNum(int num) {
+    if (num == 0) {
+        putChar('0');
+        putChar('\n');
+        return;
+    }
+
+    if (num < 0) {
+        putChar('-');
+        num = -num;
+    }
+
+    int stack[10];  // 数字最大位数通常不会超过10位
+    int top = 0;
+
+    // 将每位数字放入栈中
+    while (num > 0) {
+        stack[top++] = num % 10;
+        num /= 10;
+    }
+
+    // 从栈中取出并打印，实现逆序打印
+    while (top > 0) {
+        putChar(stack[--top] + '0');
+    }
+
+    putChar('\n');
+}
+
