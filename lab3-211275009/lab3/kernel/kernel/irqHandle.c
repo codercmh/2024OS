@@ -92,8 +92,6 @@ void GProtectFaultHandle(struct StackFrame *sf)
 
 void timerHandle(struct StackFrame *sf)
 {
-	// TODO
-	
 	//遍历pcb，将状态为STATE_BLOCKED的进程的sleepTime减一，如果进程的sleepTime变为0，重新设为STATE_RUNNABLE
 	for(int i=0;i<MAX_PCB_NUM;i++){
 		if(pcb[i].state==STATE_BLOCKED){
@@ -103,7 +101,6 @@ void timerHandle(struct StackFrame *sf)
 			}
 		}
 	}
-
 	//将当前进程的timeCount加一，如果时间片用完（timeCount==MAX_TIME_COUNT）
 	//且有其它状态为STATE_RUNNABLE的进程，切换，否则继续执行当前进程
 	//putNum(pcb[current].timeCount);
