@@ -52,6 +52,7 @@ uint32_t loadUMain(void);
 
 void initProc() {
 	int i;
+	//都初始化为STATE_DEAD，表示目前都空闲
 	for (i = 0; i < MAX_PCB_NUM; i++) {
 		pcb[i].state = STATE_DEAD;
 	}
